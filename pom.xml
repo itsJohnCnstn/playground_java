@@ -14,8 +14,45 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <assertj-core.version>4.0.0-M1</assertj-core.version>
         <junit-jupiter-api.version>5.13.1</junit-jupiter-api.version>
+        <httpclient5.version>5.6</httpclient5.version>
+        <slf4j-api.version>1.7.36</slf4j-api.version>
     </properties>
     <dependencies>
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>${httpclient5.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <!--
+              SLF4J is only a logging *facade*.
+              Many libraries (including Apache HttpClient) log via SLF4J,
+              but slf4j-api alone does NOT perform any logging.
+
+              If no SLF4J binding is present at runtime, the JVM prints:
+                "Failed to load class org.slf4j.impl.StaticLoggerBinder"
+              and logging is silently disabled (NOP logger).
+
+              slf4j-simple is a minimal SLF4J *binding* that:
+              - removes the warning
+              - sends logs to stdout/stderr
+              - requires no configuration files
+              - is ideal for small examples, demos, and learning projects
+
+              Exactly ONE SLF4J binding must be present on the classpath.
+              In real applications this is often replaced by Logback or Log4j2.
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
