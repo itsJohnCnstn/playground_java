@@ -9,6 +9,8 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +31,21 @@ import java.util.concurrent.TimeUnit;
  * <a href="https://www.baeldung.com/httpclient-timeout">Baeldung: Apache HttpClient Timeout</a>
  */
 public class Apache_HttpClient_Timeout {
+
+    /**
+     * Java entry point.
+     *
+     * <p>
+     * Declares {@code throws IOException} so we can see real failures
+     * (timeouts, connection errors, HTTP errors) without wrapping them.
+     */
+    static void main() throws IOException {
+        HttpResult result = new Apache_HttpClient_Timeout().request("https://www.github.com");
+        System.out.println(
+                "Finished: status=" + result.status() +
+                        ", bodyLength=" + result.body().length()
+        );
+    }
 
     /**
      * Manages HTTP connections.
@@ -53,8 +70,10 @@ public class Apache_HttpClient_Timeout {
      * <p>
      * Timeouts explained:
      * <ul>
-     *   <li><b>Connect timeout</b> – time to establish a TCP connection</li>
-     *   <li><b>Socket timeout</b> – max inactivity time between packets</li>
+     *   <li><b>Connect timeout</b> – (http.connection.timeout) –
+     *      the time to establish the connection with the remote host</li>
+     *   <li><b>Socket timeout</b> – (http.socket.timeout) – the time waiting for data –
+     *      after establishing the connection; maximum time of inactivity between two data packets</li>
      * </ul>
      *
      * <p>
@@ -68,22 +87,6 @@ public class Apache_HttpClient_Timeout {
                 .build();
         this.connectionManager = new BasicHttpClientConnectionManager();
         this.connectionManager.setConnectionConfig(config);
-    }
-
-
-    /**
-     * Java entry point.
-     *
-     * <p>
-     * Declares {@code throws IOException} so we can see real failures
-     * (timeouts, connection errors, HTTP errors) without wrapping them.
-     */
-    static void main() throws IOException {
-        HttpResult result = new Apache_HttpClient_Timeout().request("https://www.github.com");
-        System.out.println(
-                "Finished: status=" + result.status() +
-                        ", bodyLength=" + result.body().length()
-        );
     }
 
     /**
@@ -106,6 +109,37 @@ public class Apache_HttpClient_Timeout {
      */
     private HttpResult request(String url) throws IOException {
         HttpGet request = new HttpGet(url);
+
+
+        int hardTimeout = 5_000;
+
+        /*
+            While setting timeouts on establishing the HTTP connection and not receiving data is very useful,
+                sometimes we need to set a hard timeout for the entire request.
+            For example, the download of a potentially large file fits into this category.
+                In this case, the connection may be successfully established,
+                and data may be consistently coming through,
+                but we still need to ensure that the operation doesn’t go over some specific time threshold.
+            HttpClient doesn’t have any configuration that allows us to set an overall timeout for a request;
+                it does, however, provide abort functionality for requests,
+                so we can leverage that mechanism to implement a simple timeout mechanism:
+
+            TimerTask timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    request.abort();
+                }
+            };
+            new Timer(true).schedule(timerTask, hardTimeout);
+         */
+
+        //Refactored / modern-style version:
+        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
+            scheduler.schedule(
+                    () -> request.abort(),
+                    hardTimeout,
+                    TimeUnit.MILLISECONDS);
+        }
 
         /*
          * CloseableHttpClient is created per call here for simplicity.
