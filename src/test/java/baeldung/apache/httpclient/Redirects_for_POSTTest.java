@@ -7,6 +7,11 @@ import org.apache.hc.client5.http.impl.LaxRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -150,14 +155,17 @@ class Redirects_for_POSTTest {
     void givenRedirectingPOST_whenUsingDefaultRedirectStrategy_thenRedirected() throws IOException {
 
         final HttpPost request = new HttpPost("https://t.co/I5YYd9tddw");
+        request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create()
                 .setRedirectStrategy(new DefaultRedirectStrategy())
                 .build()) {
-            httpClient.execute(request, response -> {
-                assertThat(response.getCode()).isEqualTo(200);
-                return response;
+            Integer responseCode = httpClient.execute(request, HttpResponse::getCode);
+            SoftAssertions.assertSoftly(softAssertions -> {
+                softAssertions.assertThat(request.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()).isEqualTo("application/json");
+                softAssertions.assertThat(responseCode).isEqualTo(HttpStatus.SC_OK);
             });
+
         }
     }
 
