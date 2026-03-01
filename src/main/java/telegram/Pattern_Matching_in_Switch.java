@@ -61,12 +61,13 @@ public class Pattern_Matching_in_Switch {
         };
     }
 
-    sealed interface Result permits Result.Success, Result.Failure {
-        record Success(String data) implements Result {
-        }
+    sealed interface Result permits Success, Failure {
+    }
 
-        record Failure(String error) implements Result {
-        }
+    record Success(String data) implements Result {
+    }
+
+    record Failure(String error) implements Result {
     }
 
     /*
@@ -76,8 +77,8 @@ public class Pattern_Matching_in_Switch {
      */
     String sealedClassesWithPatternMatching(Result result) {
         return switch (result) {
-            case Result.Success(String data) -> "Got: " + data;
-            case Result.Failure(String error) -> "Error: " + error;
+            case Success(String data) -> "Got: " + data;
+            case Failure(String error) -> "Error: " + error;
             // default не нужен - компилятор знает все варианты
         };
     }
